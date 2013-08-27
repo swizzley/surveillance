@@ -1,0 +1,70 @@
+---
+- hosts: zone
+  sudo: true
+  tasks:
+    - name: Configure bttv module
+      copy: src=files/bttv.conf dest=/etc/modprobe.d/bttv.conf
+      notify:
+      - reboot
+
+    - name: Install owncloud recommendations
+      apt: pkg=sqlite state=present
+    - apt: pkg=php5-sqlite state=present
+    - apt: pkg=vim
+    - apt: pkg=unzip
+
+    - name: Install Owncloud repository key
+      apt_key: url=http://download.opensuse.org/repositories/isv:ownCloud:community/xUbuntu_12.04/Release.key state=present
+    - name: Install Owncloud repository
+      copy: src=files/owncloud.list dest=/etc/apt/sources.list.d/owncloud.list
+    - name: Install the latest Owncloud package
+      apt: pkg=owncloud state=latest update_cache=yes cache_valid_time=86400
+      notify:
+      - restart apache
+
+    - name: Configure Owncloud permissions
+      file: path=/usr/share/owncloud state=directory owner=www-data group=www-data mode=0775 recurse=yes
+    - name: Configure Owncloud permissions
+      file: path=/var/www/owncloud/data state=directory owner=www-data group=www-data mode=0770
+    - name: Configure Owncloud permissions
+      file: path=/var/www/owncloud/data/mer state=directory owner=www-data group=www-data mode=0770
+    - name: Configure Owncloud permissions
+      file: path=/var/www/owncloud/data/mer/files state=directory owner=www-data group=www-data mode=0770
+    - name: Configure Owncloud permissions
+      file: path=/var/www/owncloud/data/mer/files/motion state=directory owner=www-data group=www-data mode=0770
+
+    - name: Install motion and friends
+      apt: pkg=motion
+    - apt: pkg=ffmpeg
+    - name: Configure motion permissions
+      user: name=motion groups="www-data,video"
+
+    - name: configure motion
+      copy: src=files/motion.conf dest=/etc/motion/motion.conf
+      notify:
+        - restart motion
+
+    - name: enable motion
+      copy: src=files/motion dest=/etc/default/motion
+      notify:
+        - restart motion
+
+    - include: motion-camera.yml cam=1
+    - include: motion-camera.yml cam=2
+    - include: motion-camera.yml cam=3
+    - include: motion-camera.yml cam=4
+    - include: motion-camera.yml cam=5
+    - include: motion-camera.yml cam=6
+    - include: motion-camera.yml cam=7
+    - include: motion-camera.yml cam=8
+    - include: motion-camera.yml cam=9
+    - include: motion-camera.yml cam=10
+    - include: motion-camera.yml cam=11
+
+  handlers:
+    - name: restart apache
+      service: name=apache2 state=restarted
+    - name: restart motion
+      service: name=motion state=restarted
+    - name: reboot
+      command: /sbin/reboot -t now

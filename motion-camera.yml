@@ -1,0 +1,5 @@
+---
+- name: motion camera configuration {{cam}}
+  copy: src=templates/thread{{cam}}.conf dest=/etc/motion/thread{{cam}}.conf
+  notify:
+    - restart motion
