@@ -1,4 +1,4 @@
-# On-premises Surveillance with motion and owncloud
+# On-premises Surveillance with motion and owncloud, by ansible
 
 This is the Ansible playbook for the camera surveillance system at one of our facilities.
 
@@ -30,3 +30,5 @@ This is the Ansible playbook for the camera surveillance system at one of our fa
 Feel free to make use of this playbook for any purpose.
 
 @voitmore / @ringe
+
+http://voit.no
