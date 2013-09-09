@@ -1,6 +1,10 @@
 ---
 - hosts: zone
   sudo: true
+
+  vars_files:
+    - pwd.yml # where db_pwd is defined
+
   tasks:
     - name: Configure bttv module
       copy: src=files/bttv.conf dest=/etc/modprobe.d/bttv.conf
@@ -8,10 +12,16 @@
       - reboot
 
     - name: Install owncloud recommendations
-      apt: pkg=sqlite state=present
-    - apt: pkg=php5-sqlite state=present
-    - apt: pkg=vim
-    - apt: pkg=unzip
+      apt: pkg={{ item }} state=present
+      with_items:
+      - php5-sqlite
+      - vim
+      - unzip
+      - mysql-server
+
+#    - name: Prepare Owncloud database (MySQL)
+#      mysql_db: name=owncloud state=present
+#    - mysql_user: name=owncloud password={{db_pwd}} priv=owncloud.*:ALL state=present
 
     - name: Install Owncloud repository key
       apt_key: url=http://download.opensuse.org/repositories/isv:ownCloud:community/xUbuntu_12.04/Release.key state=present
@@ -22,44 +32,44 @@
       notify:
       - restart apache
 
-    - name: Configure Owncloud permissions
+    - name: Create motion folder in Owncloud
+      file: path=/var/www/owncloud/data/{{user}}/files/motion state=directory
+    - name: Set folder permissions
       file: path=/usr/share/owncloud state=directory owner=www-data group=www-data mode=0775 recurse=yes
-    - name: Configure Owncloud permissions
-      file: path=/var/www/owncloud/data state=directory owner=www-data group=www-data mode=0770
-    - name: Configure Owncloud permissions
-      file: path=/var/www/owncloud/data/mer state=directory owner=www-data group=www-data mode=0770
-    - name: Configure Owncloud permissions
-      file: path=/var/www/owncloud/data/mer/files state=directory owner=www-data group=www-data mode=0770
-    - name: Configure Owncloud permissions
-      file: path=/var/www/owncloud/data/mer/files/motion state=directory owner=www-data group=www-data mode=0770
 
     - name: Install motion and friends
-      apt: pkg=motion
-    - apt: pkg=ffmpeg
+      apt: pkg={{ item }}
+      with_items:
+      - motion
+      - ffmpeg
     - name: Configure motion permissions
       user: name=motion groups="www-data,video"
 
-    - name: configure motion
-      copy: src=files/motion.conf dest=/etc/motion/motion.conf
+    - name: Configure motion
+      copy: src=files/{{ item }}.conf dest=/etc/motion/{{ item }}.conf
+      with_items:
+      - motion
+      - thread1
+      - thread2
+      - thread3
+      - thread4
+      - thread5
+      - thread6
+      - thread7
+      - thread8
+      - thread9
+      - thread10
+      - thread11
       notify:
         - restart motion
+    - name: Patch motion startup script
+      copy: src=files/motion-init dest=/etc/init.d/motion
+    - file: path=/etc/init.d/motion mode=0755
 
-    - name: enable motion
+    - name: Enable motion
       copy: src=files/motion dest=/etc/default/motion
       notify:
         - restart motion
-
-    - include: motion-camera.yml cam=1
-    - include: motion-camera.yml cam=2
-    - include: motion-camera.yml cam=3
-    - include: motion-camera.yml cam=4
-    - include: motion-camera.yml cam=5
-    - include: motion-camera.yml cam=6
-    - include: motion-camera.yml cam=7
-    - include: motion-camera.yml cam=8
-    - include: motion-camera.yml cam=9
-    - include: motion-camera.yml cam=10
-    - include: motion-camera.yml cam=11
 
   handlers:
     - name: restart apache
