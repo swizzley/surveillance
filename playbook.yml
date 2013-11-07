@@ -15,6 +15,7 @@
       apt: pkg={{ item }} state=present
       with_items:
       - php5-sqlite
+      - php5-ldap
       - vim
       - unzip
       - mysql-server
@@ -23,19 +24,44 @@
 #      mysql_db: name=owncloud state=present
 #    - mysql_user: name=owncloud password={{db_pwd}} priv=owncloud.*:ALL state=present
 
-    - name: Install Owncloud repository key
-      apt_key: url=http://download.opensuse.org/repositories/isv:ownCloud:community/xUbuntu_12.04/Release.key state=present
+#    - name: Install Owncloud repository key
+#      apt_key: url=http://download.opensuse.org/repositories/isv:ownCloud:community/xUbuntu_12.04/Release.key state=present
     - name: Install Owncloud repository
       copy: src=files/owncloud.list dest=/etc/apt/sources.list.d/owncloud.list
+
     - name: Install the latest Owncloud package
-      apt: pkg=owncloud state=latest update_cache=yes cache_valid_time=86400
+      apt: pkg=owncloud state=present update_cache=yes cache_valid_time=86400
+      notify:
+      - restart apache
+
+    - name: Configure Owncloud
+      copy: src=files/owncloud-config.php dest=/var/www/owncloud/config/config.php
+
+    - name: Configure Apache modules
+      raw: a2enmod rewrite; a2enmod headers
+      notify:
+      - restart apache
+
+    - name: Configure Apache default site
+      copy: src=files/apache2/sites-default dest=/etc/apache2/sites-available/default
+      notify:
+      - restart apache
+
+    - name: Configure Apache default site (SSL)
+      copy: src=files/apache2/sites-default-ssl dest=/etc/apache2/sites-available/default-ssl
+      notify:
+      - restart apache
+
+    - name: Configure PHP
+      copy: src=files/apache2/php.ini dest=/etc/php5/apache2/php.ini
       notify:
       - restart apache
 
     - name: Create motion folder in Owncloud
       file: path=/var/www/owncloud/data/{{user}}/files/motion state=directory
+
     - name: Set folder permissions
-      file: path=/usr/share/owncloud state=directory owner=www-data group=www-data mode=0775 recurse=yes
+      file: path=/var/www/owncloud state=directory owner=www-data group=www-data mode=0775 recurse=yes
 
     - name: Install motion and friends
       apt: pkg={{ item }}
