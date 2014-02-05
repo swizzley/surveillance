@@ -6,8 +6,28 @@
     - pwd.yml # where db_pwd is defined
 
   tasks:
+    # https://bluecherry.zendesk.com/entries/235174-Using-the-Bluecherry-hardware-compression-open-source-Linux-drivers-MPEG-4-H-264-
+    - name: Download Bluecherry driver
+      command: git clone http://github.com/bluecherrydvr/solo6x10.git /usr/local/src/solo6x10 creates=/usr/local/src/solo6x10
+      tags: setup
+
+    - name: Compile Bluecherry driver
+      shell: cd /usr/local/src/solo6x10 && make creates=/etc/modprobe.d/solo6x10.conf
+      tags: setup
+
+    - name: Install Bluecherry driver
+      shell: cd /usr/local/src/solo6x10 && make install && depmod -a creates=/etc/modprobe.d/solo6x10.conf
+      tags: setup
+
+    - name: Copy solo modprobe config
+      copy: src=files/solo6x10.conf dest=/etc/modprobe.d/solo6x10.conf
+      tags: setup
+      notify:
+      - reboot
+
     - name: Configure bttv module
       copy: src=files/bttv.conf dest=/etc/modprobe.d/bttv.conf
+      tags: setup
       notify:
       - reboot
 
@@ -74,6 +94,7 @@
 
     - name: Configure motion
       copy: src=files/{{ item }}.conf dest=/etc/motion/{{ item }}.conf
+      tags: setup
       with_items:
       - motion
       - thread1
@@ -87,9 +108,12 @@
       - thread9
       - thread10
       - thread11
+      tags: setup
       notify:
         - restart motion
+
     - name: Patch motion startup script
+      tags: setup
       copy: src=files/motion-init dest=/etc/init.d/motion
     - file: path=/etc/init.d/motion mode=0755
 
