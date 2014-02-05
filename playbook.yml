@@ -16,6 +16,7 @@
       with_items:
       - php5-sqlite
       - php5-ldap
+      - php-apc
       - vim
       - unzip
       - mysql-server
@@ -61,7 +62,7 @@
       file: path=/var/www/owncloud/data/{{user}}/files/motion state=directory
 
     - name: Set folder permissions
-      file: path=/var/www/owncloud state=directory owner=www-data group=www-data mode=0775 recurse=yes
+      file: path=/var/www/owncloud state=directory owner=www-data group=www-data mode=0770 recurse=yes
 
     - name: Install motion and friends
       apt: pkg={{ item }}
