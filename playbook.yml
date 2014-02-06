@@ -18,18 +18,17 @@
     - name: Install Bluecherry driver
       shell: cd /usr/local/src/solo6x10 && make install && depmod -a creates=/etc/modprobe.d/solo6x10.conf
       tags: setup
+      notify: reboot
 
     - name: Copy solo modprobe config
       copy: src=files/solo6x10.conf dest=/etc/modprobe.d/solo6x10.conf
       tags: setup
-      notify:
-      - reboot
+      notify: reboot
 
     - name: Configure bttv module
       copy: src=files/bttv.conf dest=/etc/modprobe.d/bttv.conf
       tags: setup
-      notify:
-      - reboot
+      notify: reboot
 
     - name: Install owncloud recommendations
       apt: pkg={{ item }} state=present
